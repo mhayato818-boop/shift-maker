@@ -801,10 +801,12 @@ function populateStaffSelects() {
 async function createPeriod() {
   const year = parseInt(document.getElementById('new-year').value);
   const month = parseInt(document.getElementById('new-month').value);
+  if (!year || !month) { toast('年月を入力してください', 'error'); return; }
   const hnInputs = [...document.querySelectorAll('.hn-min')].map(i => parseInt(i.value)||0);
   const ngInputs = [...document.querySelectorAll('.ng-min')].map(i => parseInt(i.value)||0);
   const min_staff = { honten: hnInputs, nigoten: ngInputs };
-  const data = await sbFetch('shift_periods', 'POST', { year, month, min_staff });
+  const payload = { year: year, month: month, min_staff: min_staff };
+  const data = await sbFetch('shift_periods', 'POST', payload);
   if (data) {
     toast(`${year}年${month}月のシフト期間を作成しました`);
     await loadPeriods();
