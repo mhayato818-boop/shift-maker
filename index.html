@@ -5,613 +5,240 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>シフト調整アプリ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
-
-:root {
-–bg: #0f0f0f;
-–surface: #1a1a1a;
-–surface2: #242424;
-–border: #2e2e2e;
-–accent: #c8f135;
-–accent2: #4ade80;
-–warn: #f97316;
-–danger: #ef4444;
-–text: #e8e8e8;
-–text-muted: #666;
-–honten: #60a5fa;
-–nigoten: #f472b6;
-–bridge: #a78bfa;
-}
-
-- { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-font-family: ‘Noto Sans JP’, sans-serif;
-background: var(–bg);
-color: var(–text);
-min-height: 100vh;
-}
-
-/* NAV */
-nav {
-background: var(–surface);
-border-bottom: 1px solid var(–border);
-padding: 0 24px;
-display: flex;
-align-items: center;
-gap: 0;
-height: 56px;
-position: sticky;
-top: 0;
-z-index: 100;
-}
-.nav-logo {
-font-family: ‘DM Mono’, monospace;
-font-size: 14px;
-color: var(–accent);
-letter-spacing: 2px;
-margin-right: 32px;
-font-weight: 500;
-}
-.nav-tabs {
-display: flex;
-height: 100%;
-gap: 0;
-}
-.nav-tab {
-padding: 0 20px;
-height: 100%;
-display: flex;
-align-items: center;
-font-size: 13px;
-color: var(–text-muted);
-cursor: pointer;
-border-bottom: 2px solid transparent;
-transition: all 0.2s;
-white-space: nowrap;
-}
-.nav-tab:hover { color: var(–text); }
-.nav-tab.active { color: var(–accent); border-bottom-color: var(–accent); }
-
-/* MAIN */
-.main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
-
-/* PANELS */
-.panel { display: none; }
-.panel.active { display: block; }
-
-/* CARDS */
-.card {
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 12px;
-padding: 24px;
-margin-bottom: 16px;
-}
-.card-title {
-font-size: 12px;
-font-weight: 500;
-color: var(–text-muted);
-letter-spacing: 2px;
-text-transform: uppercase;
-margin-bottom: 16px;
-}
-
-/* FORM ELEMENTS */
-label { font-size: 13px; color: var(–text-muted); display: block; margin-bottom: 6px; }
-input, select, textarea {
-width: 100%;
-background: var(–surface2);
-border: 1px solid var(–border);
-border-radius: 8px;
-padding: 10px 14px;
-color: var(–text);
-font-size: 14px;
-font-family: inherit;
-outline: none;
-transition: border-color 0.2s;
-}
-input:focus, select:focus { border-color: var(–accent); }
-select option { background: var(–surface2); }
-
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.form-group { margin-bottom: 16px; }
-
-/* BUTTONS */
-.btn {
-padding: 10px 20px;
-border-radius: 8px;
-border: none;
-font-size: 13px;
-font-family: inherit;
-font-weight: 500;
-cursor: pointer;
-transition: all 0.15s;
-}
-.btn-primary { background: var(–accent); color: #0f0f0f; }
-.btn-primary:hover { background: #d4f550; }
-.btn-secondary { background: var(–surface2); color: var(–text); border: 1px solid var(–border); }
-.btn-secondary:hover { border-color: var(–accent); color: var(–accent); }
-.btn-danger { background: transparent; color: var(–danger); border: 1px solid var(–danger); }
-.btn-danger:hover { background: var(–danger); color: white; }
-.btn-sm { padding: 6px 12px; font-size: 12px; }
-.btn-full { width: 100%; }
-
-/* TAGS */
-.tag {
-display: inline-flex;
-align-items: center;
-padding: 3px 10px;
-border-radius: 20px;
-font-size: 11px;
-font-weight: 500;
-}
-.tag-honten { background: rgba(96,165,250,0.15); color: var(–honten); border: 1px solid rgba(96,165,250,0.3); }
-.tag-nigoten { background: rgba(244,114,182,0.15); color: var(–nigoten); border: 1px solid rgba(244,114,182,0.3); }
-.tag-bridge { background: rgba(167,139,250,0.15); color: var(–bridge); border: 1px solid rgba(167,139,250,0.3); }
-.tag-ok { background: rgba(74,222,128,0.15); color: var(–accent2); }
-.tag-maybe { background: rgba(251,191,36,0.15); color: #fbbf24; }
-.tag-ng { background: rgba(239,68,68,0.15); color: var(–danger); }
-
-/* AVAILABILITY GRID */
-.avail-grid {
-display: grid;
-gap: 8px;
-margin-top: 12px;
-}
-.avail-row {
-display: grid;
-grid-template-columns: 80px 1fr;
-align-items: center;
-gap: 12px;
-}
-.avail-date {
-font-size: 13px;
-color: var(–text-muted);
-font-family: ‘DM Mono’, monospace;
-}
-.avail-date.weekend { color: var(–warn); }
-.avail-btns { display: flex; gap: 6px; }
-.avail-btn {
-flex: 1;
-padding: 8px;
-border-radius: 6px;
-border: 1px solid var(–border);
-background: var(–surface2);
-color: var(–text-muted);
-font-size: 13px;
-cursor: pointer;
-transition: all 0.15s;
-text-align: center;
-}
-.avail-btn:hover { border-color: var(–text-muted); color: var(–text); }
-.avail-btn.selected-ok { background: rgba(74,222,128,0.2); border-color: var(–accent2); color: var(–accent2); }
-.avail-btn.selected-maybe { background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fbbf24; }
-.avail-btn.selected-ng { background: rgba(239,68,68,0.2); border-color: var(–danger); color: var(–danger); }
-
-/* SHIFT TABLE */
-.shift-table-wrap { overflow-x: auto; }
-.shift-table {
-width: 100%;
-border-collapse: collapse;
-font-size: 13px;
-}
-.shift-table th {
-padding: 10px 12px;
-text-align: left;
-font-size: 11px;
-letter-spacing: 1px;
-color: var(–text-muted);
-border-bottom: 1px solid var(–border);
-font-weight: 500;
-white-space: nowrap;
-}
-.shift-table td {
-padding: 10px 12px;
-border-bottom: 1px solid var(–border);
-vertical-align: middle;
-}
-.shift-table tr:last-child td { border-bottom: none; }
-.shift-table tr:hover td { background: rgba(255,255,255,0.02); }
-
-/* STAFF LIST */
-.staff-list { display: flex; flex-direction: column; gap: 10px; }
-.staff-item {
-display: flex;
-align-items: center;
-gap: 12px;
-padding: 12px 16px;
-background: var(–surface2);
-border-radius: 8px;
-border: 1px solid var(–border);
-}
-.staff-name { flex: 1; font-size: 14px; }
-.staff-actions { display: flex; gap: 8px; }
-
-/* ALERT / SUGGESTION */
-.alert {
-padding: 14px 16px;
-border-radius: 8px;
-margin-bottom: 12px;
-font-size: 13px;
-line-height: 1.6;
-}
-.alert-warn { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.3); color: var(–warn); }
-.alert-info { background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.3); color: var(–bridge); }
-.alert-success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); color: var(–accent2); }
-
-/* SECTION HEADER */
-.section-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 20px;
-}
-.section-title { font-size: 18px; font-weight: 500; }
-.section-sub { font-size: 13px; color: var(–text-muted); margin-top: 4px; }
-
-/* STATS ROW */
-.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-.stat-card {
-background: var(–surface2);
-border: 1px solid var(–border);
-border-radius: 8px;
-padding: 16px;
-text-align: center;
-}
-.stat-num { font-size: 28px; font-family: ‘DM Mono’, monospace; color: var(–accent); }
-.stat-label { font-size: 11px; color: var(–text-muted); margin-top: 4px; }
-
-/* PERIOD SELECTOR */
-.period-selector {
-display: flex;
-align-items: center;
-gap: 12px;
-margin-bottom: 24px;
-}
-.period-selector select { width: auto; }
-
-/* DAY STAFF CELL */
-.day-staff { display: flex; flex-wrap: wrap; gap: 4px; }
-.day-chip {
-font-size: 11px;
-padding: 2px 8px;
-border-radius: 4px;
-background: var(–surface);
-border: 1px solid var(–border);
-}
-.day-chip.honten { border-color: rgba(96,165,250,0.4); color: var(–honten); }
-.day-chip.nigoten { border-color: rgba(244,114,182,0.4); color: var(–nigoten); }
-.day-chip.bridge { border-color: rgba(167,139,250,0.4); color: var(–bridge); }
-.shortage { color: var(–danger); font-size: 11px; font-weight: 600; }
-
-/* MODAL */
-.modal-overlay {
-display: none;
-position: fixed; inset: 0;
-background: rgba(0,0,0,0.7);
-z-index: 200;
-align-items: center;
-justify-content: center;
-}
-.modal-overlay.open { display: flex; }
-.modal {
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 16px;
-padding: 28px;
-width: 90%;
-max-width: 480px;
-}
-.modal-title { font-size: 16px; font-weight: 500; margin-bottom: 20px; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-
-/* SWAP FORM */
-.swap-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: end; margin-bottom: 16px; }
-.swap-arrow { color: var(–text-muted); padding-bottom: 10px; text-align: center; font-size: 18px; }
-
-/* LOADING */
-.loading { text-align: center; padding: 40px; color: var(–text-muted); font-size: 14px; }
-.spinner {
-display: inline-block;
-width: 20px; height: 20px;
-border: 2px solid var(–border);
-border-top-color: var(–accent);
-border-radius: 50%;
-animation: spin 0.7s linear infinite;
-margin-right: 8px;
-vertical-align: middle;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.empty { text-align: center; padding: 40px; color: var(–text-muted); font-size: 14px; }
-
-/* WEEKDAY INPUTS */
-.weekday-grid {
-display: grid;
-grid-template-columns: repeat(7, 1fr);
-gap: 8px;
-margin-top: 8px;
-}
-.weekday-item { text-align: center; }
-.weekday-label { font-size: 11px; color: var(–text-muted); margin-bottom: 4px; }
-.weekday-item input { text-align: center; padding: 8px 4px; }
-
-/* TOAST */
-#toast {
-position: fixed;
-bottom: 24px;
-left: 50%;
-transform: translateX(-50%) translateY(80px);
-background: var(–surface2);
-border: 1px solid var(–border);
-border-radius: 8px;
-padding: 12px 20px;
-font-size: 13px;
-z-index: 300;
-transition: transform 0.3s ease;
-pointer-events: none;
-}
-#toast.show { transform: translateX(-50%) translateY(0); }
-#toast.success { border-color: var(–accent2); color: var(–accent2); }
-#toast.error { border-color: var(–danger); color: var(–danger); }
-
-.divider { border: none; border-top: 1px solid var(–border); margin: 20px 0; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --border: #2e2e2e;
+    --accent: #c8f135; --accent2: #4ade80; --warn: #f97316; --danger: #ef4444;
+    --text: #e8e8e8; --text-muted: #666;
+    --honten: #60a5fa; --nigoten: #f472b6; --bridge: #a78bfa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--accent); letter-spacing: 2px; margin-right: 32px; }
+  .nav-tabs { display: flex; height: 100%; }
+  .nav-tab { padding: 0 18px; height: 100%; display: flex; align-items: center; font-size: 13px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+  .card-title { font-size: 12px; font-weight: 500; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+  input, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group { margin-bottom: 16px; }
+  .btn { padding: 10px 20px; border-radius: 8px; border: none; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #0f0f0f; }
+  .btn-primary:hover { background: #d4f550; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: white; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-full { width: 100%; }
+  .avail-grid { display: grid; gap: 8px; margin-top: 12px; }
+  .avail-row { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: 12px; }
+  .avail-date { font-size: 13px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .avail-date.weekend { color: var(--warn); }
+  .avail-btns { display: flex; gap: 6px; }
+  .avail-btn { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .avail-btn.sel-ok { background: rgba(74,222,128,0.2); border-color: var(--accent2); color: var(--accent2); }
+  .avail-btn.sel-maybe { background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fbbf24; }
+  .avail-btn.sel-ng { background: rgba(239,68,68,0.2); border-color: var(--danger); color: var(--danger); }
+  .shift-table-wrap { overflow-x: auto; }
+  .shift-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .shift-table th { padding: 10px 12px; text-align: left; font-size: 11px; letter-spacing: 1px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; white-space: nowrap; }
+  .shift-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .shift-table tr:last-child td { border-bottom: none; }
+  .staff-list { display: flex; flex-direction: column; gap: 10px; }
+  .staff-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); }
+  .staff-name { flex: 1; font-size: 14px; }
+  .alert { padding: 14px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }
+  .alert-warn { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.3); color: var(--warn); }
+  .alert-info { background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.3); color: var(--bridge); }
+  .alert-success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); color: var(--accent2); }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .section-title { font-size: 18px; font-weight: 500; }
+  .section-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .tag { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .tag-honten { background: rgba(96,165,250,0.15); color: var(--honten); border: 1px solid rgba(96,165,250,0.3); }
+  .tag-nigoten { background: rgba(244,114,182,0.15); color: var(--nigoten); border: 1px solid rgba(244,114,182,0.3); }
+  .tag-muted { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
+  .day-staff { display: flex; flex-wrap: wrap; gap: 4px; }
+  .day-chip { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); }
+  .day-chip.honten { border-color: rgba(96,165,250,0.4); color: var(--honten); }
+  .day-chip.nigoten { border-color: rgba(244,114,182,0.4); color: var(--nigoten); }
+  .shortage { color: var(--danger); font-size: 11px; font-weight: 600; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 90%; max-width: 480px; }
+  .modal-title { font-size: 16px; font-weight: 500; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .weekday-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 8px; }
+  .weekday-item { text-align: center; }
+  .weekday-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .weekday-item input { text-align: center; padding: 8px 4px; }
+  .swap-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: end; margin-bottom: 16px; }
+  .swap-arrow { color: var(--text-muted); padding-bottom: 10px; text-align: center; font-size: 18px; }
+  .loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 13px; z-index: 300; transition: transform 0.3s ease; pointer-events: none; }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.success { border-color: var(--accent2); color: var(--accent2); }
+  #toast.error { border-color: var(--danger); color: var(--danger); }
+  #conn-banner { background: rgba(249,115,22,0.1); border-bottom: 1px solid rgba(249,115,22,0.3); padding: 10px 24px; font-size: 13px; color: var(--warn); text-align: center; display: none; }
 </style>
-
 </head>
 <body>
+
+<div id="conn-banner">⚠️ Supabase未接続です。管理タブから接続設定を行ってください。</div>
 
 <nav>
   <div class="nav-logo">SHIFT</div>
   <div class="nav-tabs">
-    <div class="nav-tab active" onclick="showPanel('panel-answer')">📝 希望回答</div>
-    <div class="nav-tab" onclick="showPanel('panel-shift')">📅 シフト表</div>
-    <div class="nav-tab" onclick="showPanel('panel-swap')">🔄 シフト変更</div>
-    <div class="nav-tab" onclick="showPanel('panel-admin')">⚙️ 管理</div>
+    <div class="nav-tab active" onclick="showPanel('panel-answer',this)">📝 希望回答</div>
+    <div class="nav-tab" onclick="showPanel('panel-shift',this)">📅 シフト表</div>
+    <div class="nav-tab" onclick="showPanel('panel-swap',this)">🔄 シフト変更</div>
+    <div class="nav-tab" onclick="showPanel('panel-admin',this)">⚙️ 管理</div>
   </div>
 </nav>
 
 <div class="main">
 
-  <!-- ===== 希望回答パネル ===== -->
+  <!-- 希望回答 -->
 
   <div id="panel-answer" class="panel active">
     <div class="section-header">
-      <div>
-        <div class="section-title">希望を回答する</div>
-        <div class="section-sub">各日程に対して希望を入力してください</div>
+      <div><div class="section-title">希望を回答する</div><div class="section-sub">各日程に対して希望を入力してください</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">自分の情報</div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0"><label>名前</label><select id="answer-staff" onchange="renderAnswerGrid()"><option value="">スタッフを選択...</option></select></div>
+        <div class="form-group" style="margin-bottom:0"><label>対象月</label><select id="answer-period" onchange="renderAnswerGrid()"><option value="">期間を選択...</option></select></div>
       </div>
     </div>
-
-```
-<div class="card">
-  <div class="card-title">自分の情報</div>
-  <div class="form-row">
-    <div class="form-group" style="margin-bottom:0">
-      <label>名前</label>
-      <select id="answer-staff">
-        <option value="">スタッフを選択...</option>
-      </select>
-    </div>
-    <div class="form-group" style="margin-bottom:0">
-      <label>対象月</label>
-      <select id="answer-period">
-        <option value="">期間を選択...</option>
-      </select>
+    <div id="answer-grid-wrap" class="card" style="display:none">
+      <div class="card-title">日程別希望</div>
+      <div id="answer-grid" class="avail-grid"></div>
+      <hr class="divider">
+      <button class="btn btn-primary btn-full" onclick="submitAvailability()">希望を送信する</button>
     </div>
   </div>
-</div>
 
-<div id="answer-grid-wrap" class="card" style="display:none">
-  <div class="card-title">日程別希望</div>
-  <div id="answer-grid" class="avail-grid"></div>
-  <hr class="divider">
-  <button class="btn btn-primary btn-full" onclick="submitAvailability()">希望を送信する</button>
-</div>
-```
-
-  </div>
-
-  <!-- ===== シフト表パネル ===== -->
+  <!-- シフト表 -->
 
   <div id="panel-shift" class="panel">
     <div class="section-header">
-      <div>
-        <div class="section-title">シフト表</div>
-        <div class="section-sub">自動生成されたシフトと提案</div>
-      </div>
-      <div class="period-selector">
-        <select id="shift-period" onchange="loadShift()">
-          <option value="">期間を選択...</option>
-        </select>
+      <div><div class="section-title">シフト表</div><div class="section-sub">自動生成されたシフトと提案</div></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <select id="shift-period" onchange="loadShift()" style="width:160px"><option value="">期間を選択...</option></select>
         <button class="btn btn-primary" onclick="generateShift()">シフト生成</button>
       </div>
     </div>
-
-```
-<div id="shift-alerts"></div>
-
-<div id="shift-content">
-  <div class="empty">期間を選択してシフトを生成してください</div>
-</div>
-```
-
+    <div id="shift-alerts"></div>
+    <div id="shift-content"><div class="empty">期間を選択してシフトを生成してください</div></div>
   </div>
 
-  <!-- ===== シフト変更パネル ===== -->
+  <!-- シフト変更 -->
 
   <div id="panel-swap" class="panel">
     <div class="section-header">
-      <div>
-        <div class="section-title">シフト変更・交換</div>
-        <div class="section-sub">合意した変更内容を入力してください</div>
+      <div><div class="section-title">シフト変更・交換</div><div class="section-sub">合意した変更内容を入力してください</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">変更内容の入力</div>
+      <div class="form-group"><label>対象月</label><select id="swap-period" onchange="loadSwapData()" style="max-width:200px"><option value="">期間を選択...</option></select></div>
+      <hr class="divider">
+      <div class="swap-row">
+        <div><label>スタッフ</label><select id="swap-staff" onchange="updateSwapDates()"></select></div>
+        <div class="swap-arrow">→</div>
+        <div><label>変更元の日付</label><select id="swap-from-date"></select></div>
       </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0"><label>変更先の日付</label><select id="swap-to-date"></select></div>
+        <div class="form-group" style="margin-bottom:0"><label>変更先の店舗</label><select id="swap-to-store"><option value="honten">本店</option><option value="nigoten">2号店</option></select></div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="applySwap()">変更を適用する</button>
     </div>
-
-```
-<div class="card">
-  <div class="card-title">変更内容の入力</div>
-  <div class="form-row">
-    <div class="form-group" style="margin-bottom:0">
-      <label>対象月</label>
-      <select id="swap-period" onchange="loadSwapData()">
-        <option value="">期間を選択...</option>
-      </select>
-    </div>
-    <div></div>
-  </div>
-  <hr class="divider">
-  <div class="swap-row">
-    <div>
-      <label>スタッフ</label>
-      <select id="swap-staff"></select>
-    </div>
-    <div class="swap-arrow">→</div>
-    <div>
-      <label>変更元の日付</label>
-      <select id="swap-from-date"></select>
+    <div class="card">
+      <div class="card-title">変更履歴</div>
+      <div id="swap-history"><div class="empty">変更履歴はまだありません</div></div>
     </div>
   </div>
-  <div class="form-group">
-    <label>変更先の日付</label>
-    <select id="swap-to-date"></select>
-  </div>
-  <div class="form-group">
-    <label>変更先の店舗</label>
-    <select id="swap-to-store">
-      <option value="honten">本店</option>
-      <option value="nigoten">2号店</option>
-    </select>
-  </div>
-  <button class="btn btn-primary btn-full" onclick="applySwap()">変更を適用する</button>
-</div>
 
-<div class="card">
-  <div class="card-title">変更履歴</div>
-  <div id="swap-history">
-    <div class="empty">変更履歴はまだありません</div>
-  </div>
-</div>
-```
-
-  </div>
-
-  <!-- ===== 管理パネル ===== -->
+  <!-- 管理 -->
 
   <div id="panel-admin" class="panel">
-    <div class="section-header">
-      <div>
-        <div class="section-title">管理設定</div>
+    <div class="section-header"><div><div class="section-title">管理設定</div></div></div>
+    <div class="card">
+      <div class="card-title">Supabase 接続設定</div>
+      <div class="form-group"><label>Project URL</label><input type="text" id="sb-url" placeholder="https://xxxx.supabase.co"></div>
+      <div class="form-group"><label>Anon Key（公開可能なキー）</label><input type="text" id="sb-key" placeholder="sb_publishable_..."></div>
+      <button class="btn btn-primary" onclick="saveConfig()">接続を保存</button>
+      <span id="config-status" style="font-size:13px;color:var(--text-muted);margin-left:12px"></span>
+    </div>
+    <div class="card">
+      <div class="card-title">シフト期間の作成</div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0"><label>年</label><input type="number" id="new-year" value="2025"></div>
+        <div class="form-group" style="margin-bottom:0"><label>月</label><input type="number" id="new-month" min="1" max="12" value="1"></div>
       </div>
+      <hr class="divider">
+      <div class="card-title">店舗別・曜日別最低人数</div>
+      <div style="margin-bottom:16px">
+        <label style="margin-bottom:8px;color:var(--honten)">本店</label>
+        <div class="weekday-grid">
+          <div class="weekday-item"><div class="weekday-label">日</div><input type="number" class="hn-min" min="0" value="2"></div>
+          <div class="weekday-item"><div class="weekday-label">月</div><input type="number" class="hn-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">火</div><input type="number" class="hn-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">水</div><input type="number" class="hn-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">木</div><input type="number" class="hn-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">金</div><input type="number" class="hn-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">土</div><input type="number" class="hn-min" min="0" value="2"></div>
+        </div>
+      </div>
+      <div>
+        <label style="margin-bottom:8px;color:var(--nigoten)">2号店</label>
+        <div class="weekday-grid">
+          <div class="weekday-item"><div class="weekday-label">日</div><input type="number" class="ng-min" min="0" value="2"></div>
+          <div class="weekday-item"><div class="weekday-label">月</div><input type="number" class="ng-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">火</div><input type="number" class="ng-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">水</div><input type="number" class="ng-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">木</div><input type="number" class="ng-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">金</div><input type="number" class="ng-min" min="0" value="1"></div>
+          <div class="weekday-item"><div class="weekday-label">土</div><input type="number" class="ng-min" min="0" value="2"></div>
+        </div>
+      </div>
+      <hr class="divider">
+      <button class="btn btn-primary" onclick="createPeriod()">期間を作成</button>
     </div>
+    <div class="card">
+      <div class="card-title">スタッフ管理</div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0"><label>名前</label><input type="text" id="new-staff-name" placeholder="例：田中 太郎"></div>
+        <div class="form-group" style="margin-bottom:0"><label>雇用形態</label><select id="new-staff-employment" onchange="updateRoleOptions()"><option value="employee">社員</option><option value="part">アルバイト</option></select></div>
+      </div>
+      <div class="form-row" style="margin-top:4px">
+        <div class="form-group" style="margin-bottom:0"><label>役職</label><select id="new-staff-role"><option value="honten_manager">本店 店長</option><option value="nigoten_manager">2号店 店長</option><option value="staff_employee">スタッフ（社員）</option></select></div>
+        <div class="form-group" style="margin-bottom:0"><label>所属店舗</label><select id="new-staff-store"><option value="honten">本店</option><option value="nigoten">2号店</option></select></div>
+      </div>
+      <hr class="divider">
+      <button class="btn btn-secondary" onclick="addStaff()" style="margin-bottom:20px">スタッフを追加</button>
+      <div id="staff-list" class="staff-list"><div class="empty">接続後に表示されます</div></div>
+    </div>
+  </div>
 
-```
-<!-- API設定 -->
-<div class="card">
-  <div class="card-title">Supabase 接続設定</div>
-  <div class="form-group">
-    <label>Project URL</label>
-    <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co">
-  </div>
-  <div class="form-group">
-    <label>Anon Key（公開可能なキー）</label>
-    <input type="text" id="sb-key" placeholder="sb_publishable_...">
-  </div>
-  <button class="btn btn-primary" onclick="saveConfig()">接続を保存</button>
-  <span id="config-status" style="font-size:13px;color:var(--text-muted);margin-left:12px;"></span>
 </div>
-
-<!-- シフト期間作成 -->
-<div class="card">
-  <div class="card-title">シフト期間の作成</div>
-  <div class="form-row">
-    <div class="form-group" style="margin-bottom:0">
-      <label>年</label>
-      <input type="number" id="new-year" value="2025">
-    </div>
-    <div class="form-group" style="margin-bottom:0">
-      <label>月</label>
-      <input type="number" id="new-month" min="1" max="12" value="1">
-    </div>
-  </div>
-  <hr class="divider">
-  <div class="card-title">店舗別・曜日別最低人数</div>
-  <div style="margin-bottom:12px">
-    <label style="margin-bottom:8px">本店</label>
-    <div class="weekday-grid">
-      <div class="weekday-item"><div class="weekday-label">日</div><input type="number" class="hn-min" min="0" value="2"></div>
-      <div class="weekday-item"><div class="weekday-label">月</div><input type="number" class="hn-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">火</div><input type="number" class="hn-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">水</div><input type="number" class="hn-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">木</div><input type="number" class="hn-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">金</div><input type="number" class="hn-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">土</div><input type="number" class="hn-min" min="0" value="2"></div>
-    </div>
-  </div>
-  <div>
-    <label style="margin-bottom:8px">2号店</label>
-    <div class="weekday-grid">
-      <div class="weekday-item"><div class="weekday-label">日</div><input type="number" class="ng-min" min="0" value="2"></div>
-      <div class="weekday-item"><div class="weekday-label">月</div><input type="number" class="ng-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">火</div><input type="number" class="ng-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">水</div><input type="number" class="ng-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">木</div><input type="number" class="ng-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">金</div><input type="number" class="ng-min" min="0" value="1"></div>
-      <div class="weekday-item"><div class="weekday-label">土</div><input type="number" class="ng-min" min="0" value="2"></div>
-    </div>
-  </div>
-  <hr class="divider">
-  <button class="btn btn-primary" onclick="createPeriod()">期間を作成</button>
-</div>
-
-<!-- スタッフ管理 -->
-<div class="card">
-  <div class="card-title">スタッフ管理</div>
-  <div class="form-row">
-    <div class="form-group" style="margin-bottom:0">
-      <label>名前</label>
-      <input type="text" id="new-staff-name" placeholder="例：田中 太郎">
-    </div>
-    <div class="form-group" style="margin-bottom:0">
-      <label>雇用形態</label>
-      <select id="new-staff-employment" onchange="updateRoleOptions()">
-        <option value="employee">社員</option>
-        <option value="part">アルバイト</option>
-      </select>
-    </div>
-  </div>
-  <div class="form-row" style="margin-top:12px">
-    <div class="form-group" style="margin-bottom:0">
-      <label>役職</label>
-      <select id="new-staff-role">
-        <option value="honten_manager">本店 店長</option>
-        <option value="nigoten_manager">2号店 店長</option>
-        <option value="staff_employee">スタッフ（社員）</option>
-      </select>
-    </div>
-    <div class="form-group" style="margin-bottom:0">
-      <label>所属店舗</label>
-      <select id="new-staff-store">
-        <option value="honten">本店</option>
-        <option value="nigoten">2号店</option>
-      </select>
-    </div>
-  </div>
-  <hr class="divider">
-  <button class="btn btn-secondary" onclick="addStaff()" style="margin-bottom:20px">スタッフを追加</button>
-  <div id="staff-list" class="staff-list">
-    <div class="loading"><span class="spinner"></span>読み込み中...</div>
-  </div>
-</div>
-```
-
-  </div>
-
-</div><!-- /main -->
-
-<!-- MODAL: シフト変更確認 -->
 
 <div id="modal-swap" class="modal-overlay">
   <div class="modal">
@@ -627,147 +254,105 @@ pointer-events: none;
 <div id="toast"></div>
 
 <script>
-// ============================================================
-// CONFIG
-// ============================================================
-let SUPABASE_URL = localStorage.getItem('sb_url') || '';
-let SUPABASE_KEY = localStorage.getItem('sb_key') || '';
+const { createClient } = supabase;
+let sb = null;
 
 const DAYS_JP = ['日','月','火','水','木','金','土'];
-const ROLE_LABELS = {
-  honten_manager: '本店 店長',
-  nigoten_manager: '2号店 店長',
-  staff_employee: 'スタッフ（社員）',
-  staff_part: 'アルバイト'
-};
-const STORE_LABELS = { honten: '本店', nigoten: '2号店' };
+const ROLE_LABELS = { honten_manager:'本店 店長', nigoten_manager:'2号店 店長', staff_employee:'スタッフ（社員）', staff_part:'アルバイト' };
+const STORE_LABELS = { honten:'本店', nigoten:'2号店' };
 
-// STATE
-let staffList = [];
-let periods = [];
-let currentShifts = [];
-let swapData = { staffId: null, fromShiftId: null, toDate: null, toStore: null };
-let swapHistory = [];
+let staffList = [], periods = [], currentShifts = [], swapShifts = [], swapData = {}, swapHistory = [], availSelections = {};
 
-// ============================================================
-// UTILS
-// ============================================================
 function toast(msg, type='success') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = `show ${type}`;
+  el.textContent = msg; el.className = `show ${type}`;
   setTimeout(() => el.className = '', 2500);
 }
 
-function showPanel(id) {
+function showPanel(id, tab) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  event.target.classList.add('active');
-  if (id === 'panel-shift' || id === 'panel-swap') syncPeriodSelects();
+  if (tab) tab.classList.add('active');
+  syncPeriodSelects();
 }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function syncPeriodSelects() {
+  const opts = '<option value="">選択してください</option>' +
+    periods.map(p => `<option value="${p.id}">${p.year}年${p.month}月</option>`).join('');
+  ['answer-period','shift-period','swap-period'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
 }
 
-async function sbFetch(path, method='GET', body=null) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) { toast('Supabase設定がありません', 'error'); return null; }
-  const opts = {
-    method,
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'return=representation' : ''
-    }
-  };
-  if (body) opts.body = JSON.stringify(body);
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
-    if (!res.ok) { const e = await res.json(); throw new Error(e.message || res.status); }
-    if (res.status === 204) return [];
-    return await res.json();
-  } catch(e) {
-    toast(`エラー: ${e.message}`, 'error');
-    return null;
-  }
-}
-
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener('DOMContentLoaded', async () => {
-  if (SUPABASE_URL) document.getElementById('sb-url').value = SUPABASE_URL;
-  if (SUPABASE_KEY) document.getElementById('sb-key').value = SUPABASE_KEY;
-  if (SUPABASE_URL && SUPABASE_KEY) {
-    await loadAll();
-  }
+window.addEventListener('DOMContentLoaded', () => {
+  const url = localStorage.getItem('sb_url') || '';
+  const key = localStorage.getItem('sb_key') || '';
+  if (url) document.getElementById('sb-url').value = url;
+  if (key) document.getElementById('sb-key').value = key;
+  if (url && key) initSupabase(url, key);
+  else document.getElementById('conn-banner').style.display = 'block';
 });
 
-async function loadAll() {
-  await Promise.all([loadStaff(), loadPeriods()]);
+function initSupabase(url, key) {
+  try {
+    sb = createClient(url, key);
+    document.getElementById('conn-banner').style.display = 'none';
+    loadAll();
+  } catch(e) {
+    toast('接続に失敗しました: ' + e.message, 'error');
+  }
+}
+
+async function loadAll() { await Promise.all([loadStaff(), loadPeriods()]); }
+
+function saveConfig() {
+  const url = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { toast('URLとキーを入力してください', 'error'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  document.getElementById('config-status').textContent = '✓ 保存しました';
+  initSupabase(url, key);
 }
 
 async function loadStaff() {
-  const data = await sbFetch('staff?order=created_at.asc');
-  if (!data) return;
-  staffList = data;
+  if (!sb) return;
+  const { data, error } = await sb.from('staff').select('*').order('created_at', { ascending: true });
+  if (error) { toast('スタッフ読込エラー: ' + error.message, 'error'); return; }
+  staffList = data || [];
   renderStaffList();
   populateStaffSelects();
 }
 
-async function loadPeriods() {
-  const data = await sbFetch('shift_periods?order=year.asc,month.asc');
-  if (!data) return;
-  periods = data;
-  populatePeriodSelects();
-}
-
-// ============================================================
-// CONFIG
-// ============================================================
-function saveConfig() {
-  SUPABASE_URL = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
-  SUPABASE_KEY = document.getElementById('sb-key').value.trim();
-  localStorage.setItem('sb_url', SUPABASE_URL);
-  localStorage.setItem('sb_key', SUPABASE_KEY);
-  document.getElementById('config-status').textContent = '✓ 保存しました';
-  loadAll();
-}
-
-// ============================================================
-// STAFF
-// ============================================================
 function updateRoleOptions() {
   const emp = document.getElementById('new-staff-employment').value;
   const roleEl = document.getElementById('new-staff-role');
-  if (emp === 'employee') {
-    roleEl.innerHTML = `
-      <option value="honten_manager">本店 店長</option>
-      <option value="nigoten_manager">2号店 店長</option>
-      <option value="staff_employee">スタッフ（社員）</option>`;
-  } else {
-    roleEl.innerHTML = `<option value="staff_part">アルバイト</option>`;
-  }
+  roleEl.innerHTML = emp === 'employee'
+    ? `<option value="honten_manager">本店 店長</option><option value="nigoten_manager">2号店 店長</option><option value="staff_employee">スタッフ（社員）</option>`
+    : `<option value="staff_part">アルバイト</option>`;
 }
 
 async function addStaff() {
+  if (!sb) { toast('先に接続設定を保存してください', 'error'); return; }
   const name = document.getElementById('new-staff-name').value.trim();
   const role = document.getElementById('new-staff-role').value;
   const store = document.getElementById('new-staff-store').value;
   if (!name) { toast('名前を入力してください', 'error'); return; }
-  const data = await sbFetch('staff', 'POST', { name, role, store });
-  if (data) {
-    toast(`${name} を追加しました`);
-    document.getElementById('new-staff-name').value = '';
-    await loadStaff();
-  }
+  const { error } = await sb.from('staff').insert({ name, role, store });
+  if (error) { toast('追加エラー: ' + error.message, 'error'); return; }
+  toast(`${name} を追加しました`);
+  document.getElementById('new-staff-name').value = '';
+  await loadStaff();
 }
 
 async function deleteStaff(id, name) {
   if (!confirm(`${name} を削除しますか？`)) return;
-  await sbFetch(`staff?id=eq.${id}`, 'DELETE');
+  const { error } = await sb.from('staff').delete().eq('id', id);
+  if (error) { toast('削除エラー: ' + error.message, 'error'); return; }
   toast(`${name} を削除しました`);
   await loadStaff();
 }
@@ -779,12 +364,9 @@ function renderStaffList() {
     <div class="staff-item">
       <div class="staff-name">${s.name}</div>
       <span class="tag ${s.store === 'honten' ? 'tag-honten' : 'tag-nigoten'}">${STORE_LABELS[s.store]}</span>
-      <span class="tag" style="background:var(--surface);border:1px solid var(--border);color:var(--text-muted)">${ROLE_LABELS[s.role]}</span>
-      <div class="staff-actions">
-        <button class="btn btn-danger btn-sm" onclick="deleteStaff('${s.id}','${s.name}')">削除</button>
-      </div>
-    </div>
-  `).join('');
+      <span class="tag tag-muted">${ROLE_LABELS[s.role] || s.role}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteStaff('${s.id}','${s.name}')">削除</button>
+    </div>`).join('');
 }
 
 function populateStaffSelects() {
@@ -795,59 +377,37 @@ function populateStaffSelects() {
   });
 }
 
-// ============================================================
-// PERIODS
-// ============================================================
+async function loadPeriods() {
+  if (!sb) return;
+  const { data, error } = await sb.from('shift_periods').select('*').order('year', { ascending: true }).order('month', { ascending: true });
+  if (error) { toast('期間読込エラー: ' + error.message, 'error'); return; }
+  periods = data || [];
+  syncPeriodSelects();
+}
+
 async function createPeriod() {
+  if (!sb) { toast('先に接続設定を保存してください', 'error'); return; }
   const year = parseInt(document.getElementById('new-year').value);
   const month = parseInt(document.getElementById('new-month').value);
   if (!year || !month) { toast('年月を入力してください', 'error'); return; }
-  const hnInputs = [...document.querySelectorAll('.hn-min')].map(i => parseInt(i.value)||0);
-  const ngInputs = [...document.querySelectorAll('.ng-min')].map(i => parseInt(i.value)||0);
+  const hnInputs = [...document.querySelectorAll('.hn-min')].map(i => parseInt(i.value) || 0);
+  const ngInputs = [...document.querySelectorAll('.ng-min')].map(i => parseInt(i.value) || 0);
   const min_staff = { honten: hnInputs, nigoten: ngInputs };
-  const payload = { year: year, month: month, min_staff: min_staff };
-  const data = await sbFetch('shift_periods', 'POST', payload);
-  if (data) {
-    toast(`${year}年${month}月のシフト期間を作成しました`);
-    await loadPeriods();
-  }
+  const { error } = await sb.from('shift_periods').insert({ year, month, min_staff });
+  if (error) { toast('作成エラー: ' + error.message, 'error'); return; }
+  toast(`${year}年${month}月のシフト期間を作成しました`);
+  await loadPeriods();
 }
 
-function populatePeriodSelects() {
-  const opts = periods.map(p => `<option value="${p.id}">${p.year}年${p.month}月</option>`).join('');
-  ['answer-period','shift-period','swap-period'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = '<option value="">選択してください</option>' + opts;
-  });
-}
-
-function syncPeriodSelects() {
-  populatePeriodSelects();
-}
-
-// ============================================================
-// AVAILABILITY (回答)
-// ============================================================
-document.getElementById('answer-staff').addEventListener('change', maybeShowGrid);
-document.getElementById('answer-period').addEventListener('change', maybeShowGrid);
-
-function maybeShowGrid() {
+function renderAnswerGrid() {
   const staffId = document.getElementById('answer-staff').value;
   const periodId = document.getElementById('answer-period').value;
   if (!staffId || !periodId) { document.getElementById('answer-grid-wrap').style.display = 'none'; return; }
   const period = periods.find(p => p.id === periodId);
   if (!period) return;
-  renderAvailGrid(period);
-  document.getElementById('answer-grid-wrap').style.display = 'block';
-}
-
-let availSelections = {};
-
-function renderAvailGrid(period) {
   availSelections = {};
   const { year, month } = period;
   const daysInMonth = new Date(year, month, 0).getDate();
-  const grid = document.getElementById('answer-grid');
   let html = '';
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month - 1, d);
@@ -857,309 +417,182 @@ function renderAvailGrid(period) {
     availSelections[dateStr] = 'ng';
     html += `
       <div class="avail-row">
-        <div class="avail-date ${isWeekend ? 'weekend' : ''}">
-          ${month}/${d}（${DAYS_JP[dow]}）
-        </div>
+        <div class="avail-date ${isWeekend ? 'weekend' : ''}">${month}/${d}（${DAYS_JP[dow]}）</div>
         <div class="avail-btns">
-          <div class="avail-btn" onclick="selectAvail('${dateStr}','ok',this)" data-date="${dateStr}">○</div>
-          <div class="avail-btn" onclick="selectAvail('${dateStr}','maybe',this)" data-date="${dateStr}">△</div>
-          <div class="avail-btn selected-ng" onclick="selectAvail('${dateStr}','ng',this)" data-date="${dateStr}">×</div>
+          <div class="avail-btn" onclick="selectAvail('${dateStr}','ok',this)">○</div>
+          <div class="avail-btn" onclick="selectAvail('${dateStr}','maybe',this)">△</div>
+          <div class="avail-btn sel-ng" onclick="selectAvail('${dateStr}','ng',this)">×</div>
         </div>
       </div>`;
   }
-  grid.innerHTML = html;
+  document.getElementById('answer-grid').innerHTML = html;
+  document.getElementById('answer-grid-wrap').style.display = 'block';
 }
 
 function selectAvail(dateStr, status, btn) {
   availSelections[dateStr] = status;
-  const row = btn.closest('.avail-btns');
-  row.querySelectorAll('.avail-btn').forEach(b => b.className = 'avail-btn');
-  btn.classList.add(`selected-${status}`);
+  btn.closest('.avail-btns').querySelectorAll('.avail-btn').forEach(b => b.className = 'avail-btn');
+  btn.classList.add(`sel-${status}`);
 }
 
 async function submitAvailability() {
+  if (!sb) { toast('先に接続設定を保存してください', 'error'); return; }
   const staffId = document.getElementById('answer-staff').value;
   const periodId = document.getElementById('answer-period').value;
   if (!staffId || !periodId) { toast('スタッフと期間を選択してください', 'error'); return; }
-
-  // 既存削除
-  await sbFetch(`availability?staff_id=eq.${staffId}&period_id=eq.${periodId}`, 'DELETE');
-
-  const rows = Object.entries(availSelections).map(([date, status]) => ({
-    staff_id: staffId, period_id: periodId, date, status
-  }));
-  const data = await sbFetch('availability', 'POST', rows);
-  if (data !== null) toast('希望を送信しました！');
+  await sb.from('availability').delete().eq('staff_id', staffId).eq('period_id', periodId);
+  const rows = Object.entries(availSelections).map(([date, status]) => ({ staff_id: staffId, period_id: periodId, date, status }));
+  const { error } = await sb.from('availability').insert(rows);
+  if (error) { toast('送信エラー: ' + error.message, 'error'); return; }
+  toast('希望を送信しました！');
 }
 
-// ============================================================
-// SHIFT GENERATION
-// ============================================================
 async function generateShift() {
+  if (!sb) { toast('先に接続設定を保存してください', 'error'); return; }
   const periodId = document.getElementById('shift-period').value;
   if (!periodId) { toast('期間を選択してください', 'error'); return; }
   const period = periods.find(p => p.id === periodId);
   if (!period) return;
-
   document.getElementById('shift-content').innerHTML = '<div class="loading"><span class="spinner"></span>シフトを生成中...</div>';
-
-  // データ取得
-  const [availData, existingShifts] = await Promise.all([
-    sbFetch(`availability?period_id=eq.${periodId}`),
-    sbFetch(`shifts?period_id=eq.${periodId}`)
-  ]);
-  if (!availData) return;
-
-  // 既存シフト削除
-  if (existingShifts && existingShifts.length > 0) {
-    await sbFetch(`shifts?period_id=eq.${periodId}`, 'DELETE');
-  }
-
+  const { data: availData, error: availErr } = await sb.from('availability').select('*').eq('period_id', periodId);
+  if (availErr) { toast('データ取得エラー: ' + availErr.message, 'error'); return; }
+  await sb.from('shifts').delete().eq('period_id', periodId);
   const { year, month } = period;
   const daysInMonth = new Date(year, month, 0).getDate();
   const min_staff = period.min_staff;
-
-  // 社員数チェック
-  const employees = staffList.filter(s => s.role !== 'staff_part');
+  const empCount = staffList.filter(s => s.role !== 'staff_part').length;
   const parts = staffList.filter(s => s.role === 'staff_part');
-  const empCount = employees.length;
-
-  // シフト生成
   const newShifts = [];
-
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const date = new Date(year, month - 1, d);
-    const dow = date.getDay();
+    const dow = new Date(year, month - 1, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
-
-    const hnMin = min_staff.honten[dow];
-    const ngMin = min_staff.nigoten[dow];
-
-    // その日に○or△のスタッフを取得
-    const availForDay = availData.filter(a => a.date === dateStr && (a.status === 'ok' || a.status === 'maybe'));
-    const availStaffIds = availForDay.map(a => a.staff_id);
-
-    // 店長は自店舗のみ
-    const hontenManager = staffList.find(s => s.role === 'honten_manager' && availStaffIds.includes(s.id));
-    const nigoteManager = staffList.find(s => s.role === 'nigoten_manager' && availStaffIds.includes(s.id));
-
-    if (hontenManager) {
-      newShifts.push({ period_id: periodId, staff_id: hontenManager.id, date: dateStr, store: 'honten', is_bridge: false });
-    }
-    if (nigoteManager) {
-      newShifts.push({ period_id: periodId, staff_id: nigoteManager.id, date: dateStr, store: 'nigoten', is_bridge: false });
-    }
-
-    // 社員スタッフ
-    const empStaffs = staffList.filter(s => s.role === 'staff_employee' && availStaffIds.includes(s.id));
-
+    const availIds = (availData || []).filter(a => a.date === dateStr && (a.status === 'ok' || a.status === 'maybe')).map(a => a.staff_id);
+    const hontenMgr = staffList.find(s => s.role === 'honten_manager' && availIds.includes(s.id));
+    const nigoteMgr = staffList.find(s => s.role === 'nigoten_manager' && availIds.includes(s.id));
+    if (hontenMgr) newShifts.push({ period_id: periodId, staff_id: hontenMgr.id, date: dateStr, store: 'honten', is_bridge: false });
+    if (nigoteMgr) newShifts.push({ period_id: periodId, staff_id: nigoteMgr.id, date: dateStr, store: 'nigoten', is_bridge: false });
+    const empStaffs = staffList.filter(s => s.role === 'staff_employee' && availIds.includes(s.id));
     if (empCount >= 3) {
-      // 社員3人以上 → スタッフ社員をブリッジ
-      empStaffs.forEach(s => {
-        newShifts.push({ period_id: periodId, staff_id: s.id, date: dateStr, store: s.store, is_bridge: true });
-      });
+      empStaffs.forEach(s => newShifts.push({ period_id: periodId, staff_id: s.id, date: dateStr, store: s.store, is_bridge: true }));
     } else {
-      // 社員2人以下 → 通常
-      empStaffs.forEach(s => {
-        newShifts.push({ period_id: periodId, staff_id: s.id, date: dateStr, store: s.store, is_bridge: false });
-      });
-      // アルバイト：社員2人+バイト1人の平日はバイト削除
-      if (empCount === 2 && !isWeekend) {
-        // バイトは入れない
-      } else {
-        // 土日またはその他 → バイトも追加
-        parts.filter(s => availStaffIds.includes(s.id)).forEach(s => {
-          newShifts.push({ period_id: periodId, staff_id: s.id, date: dateStr, store: s.store, is_bridge: false });
-        });
+      empStaffs.forEach(s => newShifts.push({ period_id: periodId, staff_id: s.id, date: dateStr, store: s.store, is_bridge: false }));
+      if (!(empCount === 2 && !isWeekend)) {
+        parts.filter(s => availIds.includes(s.id)).forEach(s => newShifts.push({ period_id: periodId, staff_id: s.id, date: dateStr, store: s.store, is_bridge: false }));
       }
     }
   }
-
-  // DB保存
   if (newShifts.length > 0) {
-    const saved = await sbFetch('shifts', 'POST', newShifts);
-    if (!saved) return;
+    const { error } = await sb.from('shifts').insert(newShifts);
+    if (error) { toast('シフト保存エラー: ' + error.message, 'error'); return; }
   }
-
   toast('シフトを生成しました');
   await loadShift();
 }
 
 async function loadShift() {
+  if (!sb) return;
   const periodId = document.getElementById('shift-period').value;
   if (!periodId) return;
   const period = periods.find(p => p.id === periodId);
   if (!period) return;
-
-  const shifts = await sbFetch(`shifts?period_id=eq.${periodId}&order=date.asc`);
-  if (!shifts) return;
-  currentShifts = shifts;
-
-  renderShiftTable(period, shifts);
+  const { data: shifts, error } = await sb.from('shifts').select('*').eq('period_id', periodId).order('date', { ascending: true });
+  if (error) { toast('シフト読込エラー: ' + error.message, 'error'); return; }
+  currentShifts = shifts || [];
+  renderShiftTable(period, currentShifts);
 }
 
 function renderShiftTable(period, shifts) {
   const { year, month } = period;
   const daysInMonth = new Date(year, month, 0).getDate();
   const min_staff = period.min_staff;
-
-  // 日付ごとにシフトをグループ化
   const byDate = {};
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     byDate[dateStr] = { honten: [], nigoten: [] };
   }
-  shifts.forEach(s => {
-    if (byDate[s.date]) byDate[s.date][s.store].push(s);
-  });
-
-  // 穴検出
+  shifts.forEach(s => { if (byDate[s.date]) byDate[s.date][s.store].push(s); });
   const shortages = [];
   Object.entries(byDate).forEach(([date, stores]) => {
-    const d = new Date(date);
-    const dow = d.getDay();
-    const hnMin = min_staff.honten[dow];
-    const ngMin = min_staff.nigoten[dow];
-    if (stores.honten.length < hnMin) shortages.push({ date, store: '本店', need: hnMin, has: stores.honten.length });
-    if (stores.nigoten.length < ngMin) shortages.push({ date, store: '2号店', need: ngMin, has: stores.nigoten.length });
+    const dow = new Date(date + 'T00:00:00').getDay();
+    if (stores.honten.length < min_staff.honten[dow]) shortages.push({ date, store: '本店', need: min_staff.honten[dow], has: stores.honten.length });
+    if (stores.nigoten.length < min_staff.nigoten[dow]) shortages.push({ date, store: '2号店', need: min_staff.nigoten[dow], has: stores.nigoten.length });
   });
-
-  // アラート
   const alertEl = document.getElementById('shift-alerts');
   if (shortages.length > 0) {
-    // 連勤者を探して交換提案
-    const suggestions = generateSwapSuggestions(shifts, shortages, byDate, min_staff, year, month, daysInMonth);
-    alertEl.innerHTML = `
-      <div class="alert alert-warn">
-        ⚠️ 人手不足の日があります（${shortages.length}件）
-      </div>
-      ${suggestions.length > 0 ? `<div class="alert alert-info">
-        💡 交換提案：<br>${suggestions.map(s => `・${s}`).join('<br>')}
-      </div>` : ''}
-    `;
+    const suggestions = generateSwapSuggestions(shifts, shortages);
+    alertEl.innerHTML = `<div class="alert alert-warn">⚠️ 人手不足の日があります（${shortages.length}件）</div>
+      ${suggestions.length > 0 ? `<div class="alert alert-info">💡 交換提案：<br>${suggestions.map(s=>`・${s}`).join('<br>')}</div>` : ''}`;
   } else {
     alertEl.innerHTML = '<div class="alert alert-success">✓ すべての日程で最低人数を満たしています</div>';
   }
-
-  // テーブル
-  let html = `<div class="card shift-table-wrap"><table class="shift-table">
-    <thead><tr>
-      <th>日付</th>
-      <th>曜日</th>
-      <th style="color:var(--honten)">本店</th>
-      <th style="color:var(--nigoten)">2号店</th>
-      <th>状態</th>
-    </tr></thead><tbody>`;
-
+  let html = `<div class="card shift-table-wrap"><table class="shift-table"><thead><tr><th>日付</th><th>曜</th><th style="color:var(--honten)">本店</th><th style="color:var(--nigoten)">2号店</th><th>状態</th></tr></thead><tbody>`;
   Object.entries(byDate).forEach(([date, stores]) => {
-    const d = new Date(date + 'T00:00:00');
-    const dow = d.getDay();
+    const dow = new Date(date + 'T00:00:00').getDay();
     const isWeekend = dow === 0 || dow === 6;
-    const hnMin = min_staff.honten[dow];
-    const ngMin = min_staff.nigoten[dow];
-    const hnShort = stores.honten.length < hnMin;
-    const ngShort = stores.nigoten.length < ngMin;
-
-    const dayNum = parseInt(date.split('-')[2]);
-
-    const hnChips = stores.honten.map(s => {
-      const staff = staffList.find(st => st.id === s.staff_id);
-      return `<span class="day-chip honten">${staff ? staff.name : '?'}${s.is_bridge ? '🔀' : ''}</span>`;
-    }).join('');
-    const ngChips = stores.nigoten.map(s => {
-      const staff = staffList.find(st => st.id === s.staff_id);
-      return `<span class="day-chip nigoten">${staff ? staff.name : '?'}${s.is_bridge ? '🔀' : ''}</span>`;
-    }).join('');
-
-    const statusHtml = [
-      hnShort ? `<span class="shortage">本店 ${stores.honten.length}/${hnMin}人</span>` : '',
-      ngShort ? `<span class="shortage">2号店 ${stores.nigoten.length}/${ngMin}人</span>` : ''
-    ].filter(Boolean).join(' ') || '<span style="color:var(--accent2);font-size:11px">✓</span>';
-
-    html += `<tr ${(hnShort || ngShort) ? 'style="background:rgba(239,68,68,0.05)"' : ''}>
-      <td style="font-family:'DM Mono',monospace;${isWeekend ? 'color:var(--warn)' : ''}">${date}</td>
-      <td style="${isWeekend ? 'color:var(--warn)' : 'color:var(--text-muted)'}">${DAYS_JP[dow]}</td>
-      <td><div class="day-staff">${hnChips || '<span style="color:var(--text-muted);font-size:11px">-</span>'}</div></td>
-      <td><div class="day-staff">${ngChips || '<span style="color:var(--text-muted);font-size:11px">-</span>'}</div></td>
-      <td>${statusHtml}</td>
-    </tr>`;
+    const hnShort = stores.honten.length < min_staff.honten[dow];
+    const ngShort = stores.nigoten.length < min_staff.nigoten[dow];
+    const hnChips = stores.honten.map(s => { const st = staffList.find(x=>x.id===s.staff_id); return `<span class="day-chip honten">${st?st.name:'?'}${s.is_bridge?'🔀':''}</span>`; }).join('');
+    const ngChips = stores.nigoten.map(s => { const st = staffList.find(x=>x.id===s.staff_id); return `<span class="day-chip nigoten">${st?st.name:'?'}${s.is_bridge?'🔀':''}</span>`; }).join('');
+    const statusHtml = [hnShort?`<span class="shortage">本店 ${stores.honten.length}/${min_staff.honten[dow]}</span>`:'', ngShort?`<span class="shortage">2号店 ${stores.nigoten.length}/${min_staff.nigoten[dow]}</span>`:''].filter(Boolean).join(' ') || '<span style="color:var(--accent2);font-size:11px">✓</span>';
+    html += `<tr ${(hnShort||ngShort)?'style="background:rgba(239,68,68,0.05)"':''}>
+      <td style="font-family:'DM Mono',monospace;${isWeekend?'color:var(--warn)':''}">${date}</td>
+      <td style="${isWeekend?'color:var(--warn)':'color:var(--text-muted)'}">${DAYS_JP[dow]}</td>
+      <td><div class="day-staff">${hnChips||'<span style="color:var(--text-muted);font-size:11px">-</span>'}</div></td>
+      <td><div class="day-staff">${ngChips||'<span style="color:var(--text-muted);font-size:11px">-</span>'}</div></td>
+      <td>${statusHtml}</td></tr>`;
   });
-
   html += '</tbody></table></div>';
   document.getElementById('shift-content').innerHTML = html;
 }
 
-function generateSwapSuggestions(shifts, shortages, byDate, min_staff, year, month, daysInMonth) {
+function generateSwapSuggestions(shifts, shortages) {
   const suggestions = [];
-  // 連勤チェック（3日以上連続）
   const staffShiftDates = {};
-  shifts.forEach(s => {
-    if (!staffShiftDates[s.staff_id]) staffShiftDates[s.staff_id] = [];
-    staffShiftDates[s.staff_id].push(s.date);
-  });
-
-  shortages.slice(0, 3).forEach(shortage => {
-    // 不足日の前後で連勤している人を探す
+  shifts.forEach(s => { if (!staffShiftDates[s.staff_id]) staffShiftDates[s.staff_id] = []; staffShiftDates[s.staff_id].push(s.date); });
+  shortages.slice(0,3).forEach(shortage => {
     Object.entries(staffShiftDates).forEach(([staffId, dates]) => {
-      const sorted = dates.sort();
-      // 3日以上連勤チェック
+      const sorted = [...dates].sort();
       for (let i = 0; i < sorted.length - 2; i++) {
-        const d1 = new Date(sorted[i]);
-        const d2 = new Date(sorted[i+1]);
-        const d3 = new Date(sorted[i+2]);
-        const diff1 = (d2 - d1) / 86400000;
-        const diff2 = (d3 - d2) / 86400000;
-        if (diff1 === 1 && diff2 === 1) {
+        const d1 = (new Date(sorted[i+1]) - new Date(sorted[i])) / 86400000;
+        const d2 = (new Date(sorted[i+2]) - new Date(sorted[i+1])) / 86400000;
+        if (d1 === 1 && d2 === 1) {
           const staff = staffList.find(s => s.id === staffId);
-          if (staff) {
-            const storeLabel = shortage.store === '本店' ? '本店' : '2号店';
-            suggestions.push(`${staff.name} の ${sorted[i+2]} を ${shortage.date}（${storeLabel}）と交換を検討`);
-          }
+          if (staff) suggestions.push(`${staff.name} の ${sorted[i+2]} を ${shortage.date}（${shortage.store}）と交換を検討`);
         }
       }
     });
   });
-
-  return [...new Set(suggestions)].slice(0, 5);
+  return [...new Set(suggestions)].slice(0,5);
 }
 
-// ============================================================
-// SWAP
-// ============================================================
 async function loadSwapData() {
+  if (!sb) return;
   const periodId = document.getElementById('swap-period').value;
   if (!periodId) return;
-  const shifts = await sbFetch(`shifts?period_id=eq.${periodId}&order=date.asc`);
-  if (!shifts) return;
-
-  // スタッフ選択で日付を更新
-  document.getElementById('swap-staff').addEventListener('change', () => updateSwapDates(shifts));
-  updateSwapDates(shifts);
+  const { data, error } = await sb.from('shifts').select('*').eq('period_id', periodId).order('date', { ascending: true });
+  if (error) { toast('読込エラー: ' + error.message, 'error'); return; }
+  swapShifts = data || [];
+  updateSwapDates();
 }
 
-function updateSwapDates(shifts) {
+function updateSwapDates() {
   const staffId = document.getElementById('swap-staff').value;
-  const staffShifts = shifts.filter(s => s.staff_id === staffId);
   const periodId = document.getElementById('swap-period').value;
   const period = periods.find(p => p.id === periodId);
-
-  const fromOpts = staffShifts.map(s => {
-    const d = new Date(s.date + 'T00:00:00');
-    return `<option value="${s.id}">${s.date}（${STORE_LABELS[s.store]}）</option>`;
-  }).join('');
-  document.getElementById('swap-from-date').innerHTML = fromOpts || '<option value="">シフトなし</option>';
-
-  // 変更先：その月の全日程
+  const staffShifts = swapShifts.filter(s => s.staff_id === staffId);
+  document.getElementById('swap-from-date').innerHTML = staffShifts.length
+    ? staffShifts.map(s => `<option value="${s.id}">${s.date}（${STORE_LABELS[s.store]}）</option>`).join('')
+    : '<option value="">シフトなし</option>';
   if (period) {
     const { year, month } = period;
     const daysInMonth = new Date(year, month, 0).getDate();
-    let toOpts = '';
+    let opts = '';
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      toOpts += `<option value="${dateStr}">${dateStr}</option>`;
+      opts += `<option value="${dateStr}">${dateStr}</option>`;
     }
-    document.getElementById('swap-to-date').innerHTML = toOpts;
+    document.getElementById('swap-to-date').innerHTML = opts;
   }
 }
 
@@ -1169,37 +602,30 @@ async function applySwap() {
   const toStore = document.getElementById('swap-to-store').value;
   const staffId = document.getElementById('swap-staff').value;
   if (!shiftId || !toDate || !staffId) { toast('全項目を入力してください', 'error'); return; }
-
   const staff = staffList.find(s => s.id === staffId);
-  const fromShift = currentShifts.find(s => s.id === shiftId) || { date: '?' };
-
+  const fromShift = swapShifts.find(s => s.id === shiftId) || {};
   swapData = { shiftId, toDate, toStore, staffId };
-
   document.getElementById('modal-swap-content').innerHTML = `
     <div class="alert alert-info">
       <strong>${staff ? staff.name : ''}</strong> のシフトを変更します<br>
-      ${fromShift.date}（${STORE_LABELS[fromShift.store] || ''}）→ ${toDate}（${STORE_LABELS[toStore]}）
-    </div>
-  `;
+      ${fromShift.date || '?'}（${STORE_LABELS[fromShift.store] || ''}）→ ${toDate}（${STORE_LABELS[toStore]}）
+    </div>`;
   document.getElementById('modal-swap').classList.add('open');
 }
 
 async function confirmSwap() {
-  const { shiftId, toDate, toStore } = swapData;
-  const result = await sbFetch(`shifts?id=eq.${shiftId}`, 'PATCH', { date: toDate, store: toStore });
-  if (result !== null) {
-    closeModal('modal-swap');
-    toast('シフトを変更しました');
-    const periodId = document.getElementById('swap-period').value;
-    if (periodId) {
-      document.getElementById('shift-period').value = periodId;
-      await loadShift();
-    }
-    // 履歴に追加
-    const staff = staffList.find(s => s.id === swapData.staffId);
-    swapHistory.unshift({ staff: staff?.name, toDate, toStore, at: new Date().toLocaleString('ja-JP') });
-    renderSwapHistory();
-  }
+  if (!sb) return;
+  const { shiftId, toDate, toStore, staffId } = swapData;
+  const { error } = await sb.from('shifts').update({ date: toDate, store: toStore }).eq('id', shiftId);
+  if (error) { toast('変更エラー: ' + error.message, 'error'); return; }
+  closeModal('modal-swap');
+  toast('シフトを変更しました');
+  const staff = staffList.find(s => s.id === staffId);
+  swapHistory.unshift({ staff: staff?.name, toDate, toStore, at: new Date().toLocaleString('ja-JP') });
+  renderSwapHistory();
+  await loadSwapData();
+  const periodId = document.getElementById('swap-period').value;
+  if (periodId) { document.getElementById('shift-period').value = periodId; await loadShift(); }
 }
 
 function renderSwapHistory() {
@@ -1207,11 +633,10 @@ function renderSwapHistory() {
   if (!swapHistory.length) { el.innerHTML = '<div class="empty">変更履歴はまだありません</div>'; return; }
   el.innerHTML = swapHistory.map(h => `
     <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
-      <span style="color:var(--text)">${h.staff}</span> → 
+      <span style="color:var(--text)">${h.staff}</span> →
       <span style="color:var(--accent)">${h.toDate}（${STORE_LABELS[h.toStore]}）</span>
       <span style="color:var(--text-muted);margin-left:8px;font-size:11px">${h.at}</span>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 </script>
 
