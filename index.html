@@ -710,7 +710,7 @@ async function loadAll() {
 }
 
 async function loadStaff() {
-  const data = await sbFetch('staff?order=created_at');
+  const data = await sbFetch('staff?order=created_at.asc');
   if (!data) return;
   staffList = data;
   renderStaffList();
@@ -718,7 +718,7 @@ async function loadStaff() {
 }
 
 async function loadPeriods() {
-  const data = await sbFetch('shift_periods?order=year,month');
+  const data = await sbFetch('shift_periods?order=year.asc,month.asc');
   if (!data) return;
   periods = data;
   populatePeriodSelects();
@@ -992,7 +992,7 @@ async function loadShift() {
   const period = periods.find(p => p.id === periodId);
   if (!period) return;
 
-  const shifts = await sbFetch(`shifts?period_id=eq.${periodId}&order=date`);
+  const shifts = await sbFetch(`shifts?period_id=eq.${periodId}&order=date.asc`);
   if (!shifts) return;
   currentShifts = shifts;
 
@@ -1130,7 +1130,7 @@ function generateSwapSuggestions(shifts, shortages, byDate, min_staff, year, mon
 async function loadSwapData() {
   const periodId = document.getElementById('swap-period').value;
   if (!periodId) return;
-  const shifts = await sbFetch(`shifts?period_id=eq.${periodId}&order=date`);
+  const shifts = await sbFetch(`shifts?period_id=eq.${periodId}&order=date.asc`);
   if (!shifts) return;
 
   // スタッフ選択で日付を更新
